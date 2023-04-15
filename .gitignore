@@ -1,0 +1,35 @@
+.idea
+
+# Node.js build artifacts
+node_modules/
+dist/
+
+# Visual Studio Code settings
+.vscode/
+
+# macOS build artifacts
+.DS_Store
+
+# TypeScript build artifacts
+*.js
+*.map
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Dependency lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Built documentation
+docs/
+
+# Other build artifacts
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
