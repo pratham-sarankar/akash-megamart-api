@@ -26,9 +26,7 @@ export default class ValidationController {
             if (!/^\+/.test(contactNumber)) {
                 throw new Error("Contact number must start with '+' sign.");
             } else if (!/^\+(?:[0-9]{1,3})?[0-9]{10}$/.test(contactNumber)) {
-                throw new Error("Contact number must be 10 digits long.");
-            } else {
-                throw new Error("Invalid contact number.");
+                throw new Error("Invalid contact number format");
             }
         }
         return true;
@@ -56,7 +54,29 @@ export default class ValidationController {
         if (!/^(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/.test(password)) {
             throw new Error("At least 1 special character is required.");
         }
-        
+
         return true;
     }
+
+    static async validateDate(date: string) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        const isValidFormat = dateRegex.test(date);
+        if (!isValidFormat) {
+            throw new Error("Invalid date format.");
+        }
+        const dateObj = new Date(date);
+        const year = dateObj.getFullYear();
+        const month = dateObj.getMonth() + 1;
+        const day = dateObj.getDate();
+        const isValidDate = (
+            year.toString() === date.substring(0, 4) &&
+            month.toString().padStart(2, '0') === date.substring(5, 7) &&
+            day.toString().padStart(2, '0') === date.substring(8, 10)
+        );
+        if (!isValidDate) {
+            throw new Error("Invalid date value.");
+        }
+        return true;
+    }
+
 }

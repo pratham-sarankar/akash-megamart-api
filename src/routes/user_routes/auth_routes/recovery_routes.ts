@@ -1,5 +1,5 @@
 import express from "express";
-import UserRecoveryController from "../../controllers/user_controllers/recovery_controller";
+import UserRecoveryController from "../../../controllers/user_controllers/auth_controllers/recovery_controller";
 
 const router = express.Router();
 

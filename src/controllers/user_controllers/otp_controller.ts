@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
 import TokenController from "../security_controllers/token_controller";
 import HashingController from "../security_controllers/hashing_controller";
-import User from "../../models/user";
+import User from "../../models/user_models/user";
 import {JwtPayload} from "jsonwebtoken";
 
 export default class OtpController {
@@ -49,6 +49,7 @@ export default class OtpController {
         }
 
         const payload = decodedToken.payload;
+        console.log(payload);
 
         //Verify OTP
         const isOtpValid = await HashingController.compareHash(otp, payload.otp);
@@ -65,13 +66,13 @@ export default class OtpController {
         const defaults: { [key: string]: any } = {};
         if (payload.contact_number) {
             whereClause.contact_number = payload.contact_number;
-            defaults.contact_number = payload.contact_number;
-            defaults.is_contact_number_verified = true;
+            defaults.contactNumber = payload.contact_number;
+            defaults.isContactNumberVerified = true;
         }
         if (payload.email) {
             whereClause.email = payload.email;
             defaults.email = payload.email;
-            defaults.is_email_verified = true;
+            defaults.isEmailVerified = true;
         }
         if (payload.password) {
             defaults.password = payload.password;
@@ -81,6 +82,19 @@ export default class OtpController {
             where: whereClause,
             defaults: defaults
         });
+
+        console.log(user.toJSON());
+
+        //Update user
+        if (!created) {
+            if (payload.contact_number) {
+                user.isContactNumberVerified = true;
+            }
+            if (payload.email) {
+                user.isEmailVerified = true;
+            }
+            await user.save();
+        }
 
         //Generate access token and refresh token
         const accessToken = TokenController.generateAccessToken(user.id);
@@ -94,7 +108,6 @@ export default class OtpController {
             data: {
                 access_token: accessToken,
                 refresh_token: user.refreshToken,
-                user: user,
             },
             message: 'User signed in successfully'
         })

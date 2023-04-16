@@ -1,4 +1,4 @@
-import sequelize from "../config/database";
+import sequelize from "../../config/database";
 import {DataTypes, Model} from "sequelize";
 
 class User extends Model {
@@ -6,7 +6,9 @@ class User extends Model {
     public displayName?: string;
     public username?: string;
     public contactNumber?: string;
+    public isContactNumberVerified?: boolean;
     public email?: string;
+    public isEmailVerified?: boolean;
     public dateOfBirth?: Date;
     public photoKey?: string;
     public password?: string;
@@ -18,7 +20,7 @@ class User extends Model {
 
 User.init(
     {
-        display_name: {
+        displayName: {
             type: DataTypes.STRING,
             allowNull: true,
             field: 'display_name'
@@ -26,28 +28,44 @@ User.init(
         username: {
             type: DataTypes.STRING,
             allowNull: true,
-            unique: true
+            unique: {
+                name: 'username',
+                msg: 'Username already exists.'
+            },
+            field: 'username'
         },
-        contact_number: {
+        contactNumber: {
             type: DataTypes.STRING,
             allowNull: true,
-            unique: true,
+            unique: {
+                name: 'contact_number',
+                msg: 'Contact number already exists.'
+            },
             field: 'contact_number'
         },
-        is_contact_number_verified: {
+        isContactNumberVerified: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
+            field: 'is_contact_number_verified'
         },
         email: {
             type: DataTypes.STRING,
             allowNull: true,
-            unique: true
+            unique: {
+                name: 'email',
+                msg: 'Email already exists.'
+            },
+            field: 'email',
+            validate: {
+                isEmail: true
+            }
         },
-        is_email_verified: {
+        isEmailVerified: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
+            field: 'is_email_verified',
         },
-        date_of_birth: {
+        dateOfBirth: {
             type: DataTypes.DATEONLY,
             allowNull: true,
             field: 'date_of_birth'
@@ -65,6 +83,7 @@ User.init(
         password: {
             type: DataTypes.STRING,
             allowNull: true,
+            field: 'password'
         }
     },
     {
@@ -72,9 +91,9 @@ User.init(
         tableName: 'users',
         underscored: true,
         scopes: {
-            exclude_password: {
+            public: {
                 attributes: {
-                    exclude: ['password']
+                    exclude: ['password', 'refreshToken']
                 }
             }
         }

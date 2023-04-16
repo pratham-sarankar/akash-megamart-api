@@ -1,12 +1,12 @@
 import {Request, Response} from "express";
-import ValidationController from "../security_controllers/validation_controller";
-import User from "../../models/user";
-import TokenController from "../security_controllers/token_controller";
-import HashingController from "../security_controllers/hashing_controller";
-import OtpController from "./otp_controller";
+import ValidationController from "../../security_controllers/validation_controller";
+import User from "../../../models/user_models/user";
+import TokenController from "../../security_controllers/token_controller";
+import HashingController from "../../security_controllers/hashing_controller";
+import OtpController from "../otp_controller";
 import {PublishResponse} from "aws-sdk/clients/sns";
-import SMSController from "../communication_controllers/sms_controller";
-import MailController from "../communication_controllers/mail_controller";
+import SMSController from "../../communication_controllers/sms_controller";
+import MailController from "../../communication_controllers/mail_controller";
 import {SentMessageInfo} from "nodemailer";
 
 export default class UserSignUpController {

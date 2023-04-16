@@ -1,11 +1,13 @@
 import {Request, Response} from "express";
-import ValidationController from "../security_controllers/validation_controller";
-import User from "../../models/user";
-import OtpController from "./otp_controller";
-import HashingController from "../security_controllers/hashing_controller";
-import SMSController from "../communication_controllers/sms_controller";
+import ValidationController from "../../security_controllers/validation_controller";
+import User from "../../../models/user_models/user";
+import OtpController from "../otp_controller";
+import HashingController from "../../security_controllers/hashing_controller";
+import SMSController from "../../communication_controllers/sms_controller";
 import {PublishResponse} from "aws-sdk/clients/sns";
-import TokenController from "../security_controllers/token_controller";
+import TokenController from "../../security_controllers/token_controller";
+import MailController from "../../communication_controllers/mail_controller";
+import {SentMessageInfo} from "nodemailer";
 
 export default class UserSignInController {
     public static async signInWithEmailAndPassword(req: Request, res: Response) {
@@ -63,6 +65,36 @@ export default class UserSignInController {
                 message: 'Incorrect password.'
             });
         }
+
+        //If user's email is not verified, send OTP
+        if (!user.isEmailVerified) {
+            //Generate verification code
+            const otp = OtpController.generateOtp();
+            const hashedOtp = await HashingController.hash(otp);
+            const verificationCode = TokenController.createVerificationCode({
+                email: user.email,
+                otp: hashedOtp
+            });
+
+            //Send verification code
+            try {
+                const response: SentMessageInfo = await MailController.sendOtp(user.email as string, otp);
+                return res.status(200).json({
+                    status: 'success',
+                    data: {
+                        verification_code: verificationCode
+                    },
+                    message: 'Verification code sent successfully.'
+                });
+            } catch (e: any) {
+                return res.status(500).json({
+                    status: 'error',
+                    data: null,
+                    message: e.message
+                });
+            }
+        }
+
 
         //Generate Access Token and Refresh Token
         const accessToken = TokenController.generateAccessToken(user.id);
@@ -139,7 +171,7 @@ export default class UserSignInController {
         return res.status(200).json({
             status: 'success',
             data: {
-                verification_code: verificationCode
+                verification_code: verificationCode,
             },
             message: 'Verification code sent successfully.'
         });

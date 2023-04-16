@@ -1,12 +1,12 @@
 import {Request, Response} from 'express'
-import ValidationController from "../security_controllers/validation_controller";
-import User from "../../models/user";
+import ValidationController from "../../security_controllers/validation_controller";
+import User from "../../../models/user_models/user";
 import {Op} from "sequelize";
-import MailController from "../communication_controllers/mail_controller";
-import OtpController from "./otp_controller";
-import HashingController from "../security_controllers/hashing_controller";
-import TokenController from "../security_controllers/token_controller";
-import SMSController from "../communication_controllers/sms_controller";
+import MailController from "../../communication_controllers/mail_controller";
+import OtpController from "../otp_controller";
+import HashingController from "../../security_controllers/hashing_controller";
+import TokenController from "../../security_controllers/token_controller";
+import SMSController from "../../communication_controllers/sms_controller";
 
 export default class UserRecoveryController {
     public static async recoverPassword(req: Request, res: Response) {
