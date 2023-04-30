@@ -1,6 +1,5 @@
 import {Request, Response} from "express";
 import ValidationController from "../../security_controllers/validation_controller";
-import User from "../../../models/user_models/user";
 import OtpController from "../otp_controller";
 import HashingController from "../../security_controllers/hashing_controller";
 import SMSController from "../../communication_controllers/sms_controller";
@@ -8,6 +7,7 @@ import {PublishResponse} from "aws-sdk/clients/sns";
 import TokenController from "../../security_controllers/token_controller";
 import MailController from "../../communication_controllers/mail_controller";
 import {SentMessageInfo} from "nodemailer";
+import prisma from "../../../config/database";
 
 export default class UserSignInController {
     public static async signInWithEmailAndPassword(req: Request, res: Response) {
@@ -34,10 +34,10 @@ export default class UserSignInController {
         }
 
         //Check if email exists
-        const user = await User.findOne({
+        const user = await prisma.users.findUnique({
             where: {
-                email: email
-            }
+                email: email,
+            },
         });
         if (!user) {
             return res.status(404).json({
@@ -82,7 +82,7 @@ export default class UserSignInController {
                 return res.status(200).json({
                     status: 'success',
                     data: {
-                        verification_code: verificationCode
+                        verificationCode
                     },
                     message: 'Verification code sent successfully.'
                 });
@@ -98,23 +98,28 @@ export default class UserSignInController {
 
         //Generate Access Token and Refresh Token
         const accessToken = TokenController.generateAccessToken(user.id);
-        user.refreshToken = TokenController.generateRefreshToken(user.id);
+        const refreshToken = TokenController.generateRefreshToken(user.id);
 
         //Update Refresh Token in database
-        await user.save();
-
+        user.refreshToken = refreshToken;
+        await prisma.users.update({
+            where: {
+                id: user.id
+            },
+            data: user,
+        })
         return res.status(200).json({
             status: 'success',
             data: {
-                access_token: accessToken,
-                refresh_token: user.refreshToken
+                accessToken,
+                refreshToken
             }
         });
     }
 
     public static async signInWithContactNumber(req: Request, res: Response) {
-        //Check Required Fields - contact_number
-        const contactNumber = req.body.contact_number;
+        //Check Required Fields - contactNumber
+        const contactNumber = req.body.contactNumber;
         if (!contactNumber) {
             return res.status(400).json({
                 status: 'error',
@@ -135,9 +140,9 @@ export default class UserSignInController {
         }
 
         //Check if contact number exists
-        const user = await User.findOne({
+        const user = await prisma.users.findUnique({
             where: {
-                contact_number: contactNumber
+                contactNumber: contactNumber
             }
         });
         if (!user) {
@@ -152,7 +157,7 @@ export default class UserSignInController {
         const otp = OtpController.generateOtp();
         const hashedOtp = await HashingController.hash(otp);
         const verificationCode = TokenController.createVerificationCode({
-            contact_number: contactNumber,
+            contactNumber,
             otp: hashedOtp
         });
 
@@ -171,7 +176,7 @@ export default class UserSignInController {
         return res.status(200).json({
             status: 'success',
             data: {
-                verification_code: verificationCode,
+                verificationCode,
             },
             message: 'Verification code sent successfully.'
         });

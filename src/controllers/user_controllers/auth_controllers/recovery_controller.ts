@@ -1,12 +1,11 @@
 import {Request, Response} from 'express'
 import ValidationController from "../../security_controllers/validation_controller";
-import User from "../../../models/user_models/user";
-import {Op} from "sequelize";
 import MailController from "../../communication_controllers/mail_controller";
 import OtpController from "../otp_controller";
 import HashingController from "../../security_controllers/hashing_controller";
 import TokenController from "../../security_controllers/token_controller";
 import SMSController from "../../communication_controllers/sms_controller";
+import prisma from "../../../config/database";
 
 export default class UserRecoveryController {
     public static async recoverPassword(req: Request, res: Response) {
@@ -38,17 +37,13 @@ export default class UserRecoveryController {
         }
 
         //Find user by email or contact number
-        const user = await User.findOne({
+        const user = await prisma.users.findFirst({
             where: {
-                [Op.or]: [
-                    {
-                        email: identity
-                    },
-                    {
-                        contact_number: identity
-                    },
-                ]
-            }
+                OR: [
+                    {email: identity},
+                    {contactNumber: identity},
+                ],
+            },
         });
 
         //If user does not exist, return error
@@ -64,14 +59,14 @@ export default class UserRecoveryController {
         const otp = OtpController.generateOtp();
         const otpHash = await HashingController.hash(otp);
 
-        //Create data that should contain email or contact_number according to identity
-        const data: { otp: string, email?: string, contact_number?: string } = {
+        //Create data that should contain email or contactNumber according to identity
+        const data: { otp: string, email?: string, contactNumber?: string } = {
             otp: otpHash,
         };
         if (identity.includes('@')) {
             data.email = identity;
         } else {
-            data.contact_number = identity;
+            data.contactNumber = identity;
         }
         const verificationCode = TokenController.createVerificationCode(data);
 
@@ -90,7 +85,7 @@ export default class UserRecoveryController {
         return res.status(200).json({
             status: 'success',
             data: {
-                verification_code: verificationCode
+                verificationCode
             },
         });
     }

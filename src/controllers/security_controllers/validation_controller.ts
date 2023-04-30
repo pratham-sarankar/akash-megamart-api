@@ -18,6 +18,13 @@ export default class ValidationController {
         return true;
     }
 
+    static async validatePincode(pincode: string) {
+        const pincodeRegex = /^\d{6}$/;
+        if (!pincodeRegex.test(pincode)) {
+            throw new Error('Invalid pincode');
+        }
+    }
+
     static async validateContactNumber(contactNumber: string) {
         // Matches a phone number that starts with a '+' sign, followed by a 1-3 digit country code, and then a 10-digit phone number.
         const contactNumberRegex = /^\+(?:[0-9]{1,3})?[0-9]{10}$/;

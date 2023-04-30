@@ -1,6 +1,5 @@
 import {Request, Response} from "express";
 import ValidationController from "../../security_controllers/validation_controller";
-import User from "../../../models/user_models/user";
 import TokenController from "../../security_controllers/token_controller";
 import HashingController from "../../security_controllers/hashing_controller";
 import OtpController from "../otp_controller";
@@ -8,6 +7,7 @@ import {PublishResponse} from "aws-sdk/clients/sns";
 import SMSController from "../../communication_controllers/sms_controller";
 import MailController from "../../communication_controllers/mail_controller";
 import {SentMessageInfo} from "nodemailer";
+import prisma from "../../../config/database";
 
 export default class UserSignUpController {
 
@@ -36,7 +36,7 @@ export default class UserSignUpController {
         }
 
         //Check if email exists
-        const user = await User.findOne({
+        const user = await prisma.users.findUnique({
             where: {
                 email: email
             }
@@ -74,14 +74,14 @@ export default class UserSignUpController {
         return res.status(200).json({
             status: 'success',
             data: {
-                verification_code: verificationCode
+                verificationCode
             }
         });
     }
 
     public static async signUpWithContactNumber(req: Request, res: Response) {
-        //Check Required Fields - contact_number
-        const contactNumber = req.body.contact_number;
+        //Check Required Fields - contactNumber
+        const {contactNumber} = req.body;
         if (!contactNumber) {
             return res.status(400).json({
                 status: 'error',
@@ -102,10 +102,10 @@ export default class UserSignUpController {
         }
 
         //Check if contact number exists
-        const user = await User.findOne({
+        const user = await prisma.users.findUnique({
             where: {
-                contact_number: contactNumber
-            }
+                contactNumber: contactNumber,
+            },
         });
         if (user) {
             return res.status(409).json({
@@ -119,7 +119,7 @@ export default class UserSignUpController {
         const otp = OtpController.generateOtp();
         const hashedOtp = await HashingController.hash(otp);
         const verificationCode = TokenController.createVerificationCode({
-            contact_number: contactNumber,
+            contactNumber,
             otp: hashedOtp
         });
 
@@ -139,7 +139,7 @@ export default class UserSignUpController {
         return res.status(200).json({
             status: 'success',
             data: {
-                verification_code: verificationCode
+                verificationCode
             },
             message: 'Verification code sent successfully.'
         });

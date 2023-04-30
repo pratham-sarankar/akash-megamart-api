@@ -5,15 +5,19 @@ import morgan from 'morgan';
 
 // Import all routes
 import user_routes from "./routes/user_routes";
+import product_routes from "./routes/product_routes";
 
 const app: Application = express();
 
-app.use(json());
+app.use(json({
+    limit: '50mb'
+}));
 app.use(cors());
 app.use(morgan('dev'));
 
 
 app.use('/users', user_routes);
+app.use("/products", product_routes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

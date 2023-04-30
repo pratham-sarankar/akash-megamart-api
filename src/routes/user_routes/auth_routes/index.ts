@@ -3,6 +3,7 @@ import signin_routes from "./signin_routes";
 import signup_routes from "./signup_routes";
 import recovery_routes from "./recovery_routes";
 import OtpController from "../../../controllers/user_controllers/otp_controller";
+import AuthController from "../../../controllers/user_controllers/auth_controllers/auth_controller";
 
 // Create new router
 const router = express.Router();
@@ -11,6 +12,7 @@ const authRouter = express.Router();
 
 // Import all customer routes
 authRouter.use('/verify-otp', OtpController.verifyOtp);
+authRouter.use('/refresh-token', AuthController.refreshAccessToken);
 authRouter.use(signin_routes);
 authRouter.use(signup_routes);
 authRouter.use(recovery_routes);

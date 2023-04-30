@@ -9,7 +9,9 @@ export default class TokenMiddleware {
         if (!token) {
             return res.status(401).json({
                 status: 'error',
-                data: null,
+                data: {
+                    code: "no_token",
+                },
                 message: "Unauthorized Access - No token provided"
             });
         }
@@ -19,14 +21,30 @@ export default class TokenMiddleware {
             const decodedToken: JwtPayload = TokenController.decodeToken(token)?.payload as JwtPayload;
             req.headers.uid = decodedToken.uid;
             next();
-        } catch (error) {
-            return res.status(401).json(
-                {
-                    status: 'error',
-                    data: null,
-                    message: "Unauthorized Access - Invalid or expired token",
-                }
-            );
+        } catch (error: any) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json(
+                    {
+                        status: 'error',
+                        data: {
+                            code: "expired_token",
+                        },
+                        message: "Token Expired, please refresh the token to gain access",
+                    }
+                );
+            } else {
+                return res.status(401).json(
+                    {
+                        status: 'error',
+                        data: {
+                            code: "invalid_token",
+                        },
+                        message: "Unauthorized Access - Invalid or expired token",
+                    }
+                );
+            }
+
+
         }
     }
 }

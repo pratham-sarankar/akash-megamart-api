@@ -1,13 +1,17 @@
 import {Request, Response} from 'express';
-import User from "../../../models/user_models/user";
 import AwsS3Middleware from "../../../middlewares/aws_s3_middleware";
+import prisma from "../../../config/database";
 
 export default class UserPhotoController {
     public static async uploadPhoto(req: Request, res: Response) {
         const uid: number = Number(req.headers.uid);
 
         //Get user from database
-        const user = await User.scope('public').findByPk(uid);
+        const user = await prisma.users.findUnique({
+            where: {
+                id: uid
+            },
+        });
 
         //If user does not exist, return error
         if (!user) {
@@ -46,7 +50,12 @@ export default class UserPhotoController {
         user.photoKey = key;
 
         //Save user
-        await user.save();
+        await prisma.users.update({
+            where: {
+                id: uid
+            },
+            data: user
+        });
 
         return res.status(200).json({
             status: 'success',

@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
-import User from "../../../models/user_models/user";
 import HashingController from "../../security_controllers/hashing_controller";
 import ValidationController from "../../security_controllers/validation_controller";
+import prisma from "../../../config/database";
 
 export default class UserProfileController {
     public static async getProfile(req: Request, res: Response) {
@@ -9,7 +9,11 @@ export default class UserProfileController {
         const uid: number = Number(req.headers.uid);
 
         //Get user from database
-        const user = await User.scope('public').findByPk(uid);
+        const user = await prisma.users.findUnique({
+            where: {
+                id: uid
+            },
+        });
 
         //If user does not exist, return error
         if (!user) {
@@ -75,7 +79,12 @@ export default class UserProfileController {
             const uid: number = Number(req.headers.uid);
 
             //Get user from database
-            const user = await User.scope('public').findByPk(uid);
+            const user = await prisma.users.findUnique({
+                where: {
+                    id: uid
+                },
+            });
+
 
             //If user does not exist, return error
             if (!user) {
@@ -93,11 +102,12 @@ export default class UserProfileController {
             }
             //Check is username is provided
             if (req.body.username && user.username != req.body.username) {
-                const userExists = await User.findOne({
+                const userExists = await prisma.users.findUnique({
                     where: {
                         username: req.body.username
-                    }
+                    },
                 });
+
                 if (userExists) {
                     return res.status(400).json({
                         status: 'error',
@@ -109,14 +119,14 @@ export default class UserProfileController {
             }
             //Check if date of birth is provided
             if (req.body.dateOfBirth && user.dateOfBirth != req.body.dateOfBirth) {
-                user.dateOfBirth = req.body.dateOfBirth;
+                user.dateOfBirth = new Date(req.body.dateOfBirth);
             }
             //Check if email is provided
             if (req.body.email && user.email != req.body.email) {
-                const userExists = await User.findOne({
+                const userExists = await prisma.users.findUnique({
                     where: {
                         email: req.body.email
-                    }
+                    },
                 });
                 if (userExists) {
                     return res.status(400).json({
@@ -130,10 +140,10 @@ export default class UserProfileController {
             }
             //Check if contact number is provided
             if (req.body.contactNumber && user.contactNumber != req.body.contactNumber) {
-                const userExists = await User.findOne({
+                const userExists = await prisma.users.findUnique({
                     where: {
-                        contact_number: req.body.contactNumber,
-                    }
+                        contactNumber: req.body.contactNumber,
+                    },
                 });
                 if (userExists) {
                     return res.status(400).json({
@@ -147,7 +157,12 @@ export default class UserProfileController {
             }
 
             //Save changes
-            await user.save();
+            await prisma.users.update({
+                where: {
+                    id: uid
+                },
+                data: user
+            });
 
             //Return user profile
             return res.status(200).json({
@@ -167,7 +182,12 @@ export default class UserProfileController {
         const uid: number = Number(req.headers.uid);
 
         //Get user from database
-        const user = await User.findByPk(uid);
+        const user = await prisma.users.findUnique({
+            where: {
+                id: uid
+            },
+        });
+
 
         //If user does not exist, return error
         if (!user) {
@@ -228,10 +248,20 @@ export default class UserProfileController {
 
         //Update password
         user.password = await HashingController.hash(req.body.newPassword);
-        await user.save();
+        await prisma.users.update({
+            where: {
+                id: uid
+            },
+            data: user
+        });
+
 
         //Fetch the user again
-        const updatedUser = await User.scope('public').findByPk(uid);
+        const updatedUser = await prisma.users.findUnique({
+            where: {
+                id: uid
+            },
+        });
 
         //Return user profile
         return res.status(200).json({

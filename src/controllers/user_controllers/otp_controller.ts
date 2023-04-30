@@ -1,8 +1,8 @@
 import {Request, Response} from 'express';
 import TokenController from "../security_controllers/token_controller";
 import HashingController from "../security_controllers/hashing_controller";
-import User from "../../models/user_models/user";
 import {JwtPayload} from "jsonwebtoken";
+import prisma from "../../config/database";
 
 export default class OtpController {
     static generateOtp(): string {
@@ -16,15 +16,111 @@ export default class OtpController {
         return otp;
     }
 
+    //
+    // static async verifyOtp(req: Request, res: Response) {
+    //     //Check Required Fields - verificationCode, otp
+    //     const {verificationCode} = req.body;
+    //     const otp = req.body.otp;
+    //     if (!verificationCode || !otp) {
+    //         return res.status(400).json({
+    //             status: 'error',
+    //             data: null,
+    //             message: 'Verification Code and OTP are required parameters'
+    //         });
+    //     }
+    //
+    //     //Verify verification code
+    //     try {
+    //         await TokenController.verifyToken(verificationCode);
+    //     } catch (e: any) {
+    //         return res.status(400).json({
+    //             status: 'error',
+    //             data: null,
+    //             message: 'Invalid or expired verification code'
+    //         });
+    //     }
+    //
+    //     const decodedToken: JwtPayload | null = await TokenController.decodeToken(verificationCode);
+    //     if (!decodedToken) {
+    //         return res.status(400).json({
+    //             status: 'error',
+    //             data: null,
+    //             message: 'Invalid or expired verification code'
+    //         });
+    //     }
+    //
+    //     const payload = decodedToken.payload;
+    //
+    //     //Verify OTP
+    //     const isOtpValid = await HashingController.compareHash(otp, payload.otp);
+    //     if (!isOtpValid) {
+    //         return res.status(400).json({
+    //             status: 'error',
+    //             data: null,
+    //             message: 'Invalid OTP'
+    //         });
+    //     }
+    //
+    //     //Create or find user
+    //     const whereClause: { [key: string]: any } = {};
+    //     const defaults: { [key: string]: any } = {};
+    //     if (payload.contactNumber) {
+    //         whereClause.contactNumber = payload.contactNumber;
+    //         defaults.contactNumber = payload.contactNumber;
+    //         defaults.isContactNumberVerified = true;
+    //     }
+    //     if (payload.email) {
+    //         whereClause.email = payload.email;
+    //         defaults.email = payload.email;
+    //         defaults.isEmailVerified = true;
+    //     }
+    //     if (payload.password) {
+    //         defaults.password = payload.password;
+    //     }
+    //
+    //     const [user, created] = await User.findOrCreate({
+    //         where: whereClause,
+    //         defaults: defaults
+    //     });
+    //
+    //     //Update user
+    //     if (!created) {
+    //         if (payload.contactNumber) {
+    //             user.isContactNumberVerified = true;
+    //         }
+    //         if (payload.email) {
+    //             user.isEmailVerified = true;
+    //         }
+    //         await user.save();
+    //     }
+    //
+    //     //Generate access token and refresh token
+    //     const accessToken = TokenController.generateAccessToken(user.id);
+    //     const refreshToken = TokenController.generateRefreshToken(user.id);
+    //
+    //     //Update refresh token in database
+    //     user.refreshToken = refreshToken;
+    //     await user.save();
+    //
+    //     return res.status(200).json({
+    //         status: 'success',
+    //         data: {
+    //             accessToken,
+    //             refreshToken,
+    //         },
+    //         message: 'User signed in successfully'
+    //     })
+    // }
+
     static async verifyOtp(req: Request, res: Response) {
         //Check Required Fields - verificationCode, otp
-        const verificationCode = req.body.verification_code;
+        const {verificationCode} = req.body;
         const otp = req.body.otp;
         if (!verificationCode || !otp) {
             return res.status(400).json({
                 status: 'error',
                 data: null,
-                message: 'Verification Code and OTP are required parameters'
+                message: 'Verification Code and OTP are required parameters',
             });
         }
 
@@ -35,21 +131,20 @@ export default class OtpController {
             return res.status(400).json({
                 status: 'error',
                 data: null,
-                message: 'Invalid or expired verification code'
+                message: 'Invalid or expired verification code',
             });
         }
 
-        const decodedToken: JwtPayload | null = await TokenController.decodeToken(verificationCode);
+        const decodedToken = await TokenController.decodeToken(verificationCode);
         if (!decodedToken) {
             return res.status(400).json({
                 status: 'error',
                 data: null,
-                message: 'Invalid or expired verification code'
+                message: 'Invalid or expired verification code',
             });
         }
 
-        const payload = decodedToken.payload;
-        console.log(payload);
+        const payload = decodedToken.payload as JwtPayload;
 
         //Verify OTP
         const isOtpValid = await HashingController.compareHash(otp, payload.otp);
@@ -57,60 +152,82 @@ export default class OtpController {
             return res.status(400).json({
                 status: 'error',
                 data: null,
-                message: 'Invalid OTP'
+                message: 'Invalid OTP',
             });
         }
 
         //Create or find user
-        const whereClause: { [key: string]: any } = {};
-        const defaults: { [key: string]: any } = {};
-        if (payload.contact_number) {
-            whereClause.contact_number = payload.contact_number;
-            defaults.contactNumber = payload.contact_number;
-            defaults.isContactNumberVerified = true;
-        }
-        if (payload.email) {
-            whereClause.email = payload.email;
-            defaults.email = payload.email;
-            defaults.isEmailVerified = true;
-        }
-        if (payload.password) {
-            defaults.password = payload.password;
-        }
-
-        const [user, created] = await User.findOrCreate({
-            where: whereClause,
-            defaults: defaults
+        let user = await prisma.users.findFirst({
+            where: {
+                OR: [
+                    {
+                        email: payload.email,
+                    },
+                    {
+                        contactNumber: payload.contactNumber,
+                    },
+                ],
+            },
         });
 
-        console.log(user.toJSON());
 
-        //Update user
-        if (!created) {
-            if (payload.contact_number) {
-                user.isContactNumberVerified = true;
-            }
+        if (!user) {
+            user = await prisma.users.create({
+                data: {
+                    email: payload.email,
+                    contactNumber: payload.contactNumber,
+                    password: payload.password,
+                    isEmailVerified: !!payload.email,
+                    isContactNumberVerified: !!payload.contactNumber,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            });
+        } else {
             if (payload.email) {
-                user.isEmailVerified = true;
+                await prisma.users.update({
+                    where: {
+                        email: payload.email,
+                    },
+                    data: {
+                        isEmailVerified: true,
+                    },
+                });
             }
-            await user.save();
+            if (payload.contactNumber) {
+                await prisma.users.update({
+                    where: {
+                        contactNumber: payload.contactNumber,
+                    },
+                    data: {
+                        isContactNumberVerified: true,
+                    },
+                });
+            }
         }
 
         //Generate access token and refresh token
         const accessToken = TokenController.generateAccessToken(user.id);
-        user.refreshToken = TokenController.generateRefreshToken(user.id);
+        const refreshToken = TokenController.generateRefreshToken(user.id);
 
         //Update refresh token in database
-        await user.save();
+        await prisma.users.update({
+            where: {
+                id: user.id,
+            },
+            data: {
+                refreshToken: refreshToken,
+            },
+        });
 
         return res.status(200).json({
             status: 'success',
             data: {
-                access_token: accessToken,
-                refresh_token: user.refreshToken,
+                accessToken,
+                refreshToken,
             },
-            message: 'User signed in successfully'
-        })
+            message: 'User signed in successfully',
+        });
     }
 }
 
