@@ -12,6 +12,7 @@ const meRouter = express.Router();
 meRouter.get('/', TokenMiddleware.authorize, UserProfileController.getProfile);
 meRouter.put('/', TokenMiddleware.authorize, UserProfileController.updateProfile);
 meRouter.put('/password', TokenMiddleware.authorize, UserProfileController.updatePassword);
+meRouter.get('/photo/:key', AwsS3Middleware.downloader);
 meRouter.put('/photo', TokenMiddleware.authorize, MulterMiddleware.uploader, AwsS3Middleware.uploader, UserPhotoController.uploadPhoto);
 
 router.use("/me", meRouter);

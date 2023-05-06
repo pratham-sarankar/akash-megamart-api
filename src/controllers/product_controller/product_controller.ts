@@ -21,8 +21,8 @@ export default class ProductController {
                 },
             });
             const result: any = MargERPEncryption.decodeAndDecompress(response.data);
-            const products = ProductController.parseMargProductsData((result['Details']['pro_N'] ?? []) as any);
-
+            let products = ProductController.parseMargProductsData((result['Details']['pro_N'] ?? []) as any);
+            products = products.filter((product: any) => product.company != "MARKET");
             await prisma.products.deleteMany({});
             await prisma.products.createMany({data: products, skipDuplicates: true});
 

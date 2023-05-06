@@ -6,6 +6,8 @@ import morgan from 'morgan';
 // Import all routes
 import user_routes from "./routes/user_routes";
 import product_routes from "./routes/product_routes";
+import wishlist_routes from "./routes/wishlist_routes";
+import cart_routes from "./routes/cart_routes";
 
 const app: Application = express();
 
@@ -18,6 +20,8 @@ app.use(morgan('dev'));
 
 app.use('/users', user_routes);
 app.use("/products", product_routes);
+app.use("/wishlist", wishlist_routes);
+app.use("/cart", cart_routes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

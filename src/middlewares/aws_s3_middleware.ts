@@ -29,15 +29,15 @@ export default class AwsS3Middleware {
     }
 
 
-    public static async downloader(req: any, res: any, next: any): Promise<void> {
+    public static async downloader(req: any, res: any): Promise<void> {
         try {
             const key = req.params.key;
             const downloadParams = {
                 Key: key,
                 Bucket: process.env.AWS_BUCKET_NAME!,
             };
-            req.stream = await s3.getObject(downloadParams).createReadStream();
-            next();
+            const stream = await s3.getObject(downloadParams).createReadStream();
+            return stream.pipe(res);
         } catch (e) {
             res.status(500).json({status: 'error', data: e, message: 'An error occurred in s3 middleware.'});
         }

@@ -5,6 +5,7 @@ import ProductSearchController from "../../controllers/product_controller/produc
 const router = express.Router();
 
 router.get("/search", ProductSearchController.search);
+router.get("/top", ProductSearchController.topProducts);
 router.post("/sync", ProductController.sync);
 
 export default router;
