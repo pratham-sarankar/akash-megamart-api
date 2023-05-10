@@ -81,32 +81,12 @@ export default class CartController {
             }
         });
 
-        //If product is already in cart, update quantity
+        //If product is already in cart, return error
         if (cartItem) {
-            const result = await prisma.cartProducts.update({
-                where: {
-                    id: cartItem.id,
-                },
-                data: {
-                    quantity: cartItem.quantity + quantity,
-                }
-            });
-
-            const updatedCartItem = await prisma.cartProducts.findUnique({
-                where: {
-                    id: cartItem.id,
-                },
-                include: {
-                    product: true,
-                }
-            });
-
             return res.status(200).json({
-                status: 'success',
-                data: {
-                    cartProduct: updatedCartItem,
-                },
-                message: 'Product added to cart successfully',
+                status: 'error',
+                data: null,
+                message: 'Product already in cart, update quantity instead',
             });
         }
 
@@ -163,7 +143,7 @@ export default class CartController {
         }
 
         //Check if product exists
-        const product = await prisma.products.findUnique({
+        const product = await prisma.products.findFirst({
             where: {
                 id: Number(id),
             }
@@ -181,6 +161,9 @@ export default class CartController {
         const cartItem = await prisma.cartProducts.findFirst({
             where: {
                 productId: Number(id),
+            },
+            include: {
+                product: true,
             }
         });
 
@@ -193,7 +176,26 @@ export default class CartController {
             });
         }
 
-        //If product is in cart, update quantity
+        //Check if quantity exceeds product stock
+        if (Number(quantity) > cartItem.product.stock) {
+            return res.status(400).json({
+                status: 'error',
+                data: null,
+                message: 'Quantity exceeds product stock',
+            });
+        }
+
+        //Check if the quantity is greater than or equal to minCartLimit and less than or equal to maxCartLimit.
+        if (Number(quantity) < cartItem.product.minCartLimit! || Number(quantity) > cartItem.product.maxCartLimit!) {
+            return res.status(400).json({
+                status: 'error',
+                data: null,
+                message: `Quantity must be between ${cartItem.product.minCartLimit} and ${cartItem.product.maxCartLimit}`,
+            });
+        }
+
+
+        //Update Quantity
         const result = await prisma.cartProducts.update({
             where: {
                 id: cartItem.id,

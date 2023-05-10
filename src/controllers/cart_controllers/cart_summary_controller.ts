@@ -26,11 +26,11 @@ export default class CartSummaryController {
         const totalProducts = cartProducts.length;
 
         const subTotal = cartProducts.reduce((acc, cartProduct) => {
-            return acc + (cartProduct.product.mrp * cartProduct.quantity);
+            return acc + (cartProduct.product.mrp! * cartProduct.quantity);
         }, 0);
 
         const discountedTotal = cartProducts.reduce((acc, cartProduct) => {
-            return acc + (cartProduct.product.saleRate * cartProduct.quantity);
+            return acc + (cartProduct.product.saleRate! * cartProduct.quantity);
         }, 0);
 
         const deliveryCharge = 0;

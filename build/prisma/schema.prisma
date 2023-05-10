@@ -8,7 +8,7 @@ datasource db {
 }
 
 model addresses {
-  id            Int      @id @default(autoincrement())
+  id            Int      @id @default(autoincrement()) @db.UnsignedInt
   name          String?  @db.VarChar(255)
   contactNumber String?  @db.VarChar(255)
   type          String   @db.VarChar(255)
@@ -17,42 +17,71 @@ model addresses {
   landmark      String?  @db.VarChar(255)
   pinCode       String?  @db.VarChar(255)
   isDefault     Boolean? @default(false)
-  userId        Int
-  createdAt     DateTime @db.DateTime(0)
-  updatedAt     DateTime @db.DateTime(0)
+  userId        Int      @db.UnsignedInt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   users         users    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "addresses_ibfk_1")
 
   @@index([userId], map: "userId")
 }
 
 model products {
-  id           Int    @id @default(autoincrement()) @db.UnsignedInt
-  catcode      String @db.VarChar(255)
-  code         String @unique(map: "unique_code") @db.VarChar(255)
-  name         String @db.VarChar(255)
-  stock        Int    @db.UnsignedInt
-  remark       String @db.VarChar(255)
-  company      String @db.VarChar(255)
+  id           Int                @id @default(autoincrement()) @db.UnsignedInt
+  catcode      String             @db.VarChar(255)
+  code         String             @unique(map: "unique_code") @db.VarChar(255)
+  name         String             @db.VarChar(255)
+  stock        Int                @db.UnsignedInt
+  remark       String             @db.VarChar(255)
+  company      String             @db.VarChar(255)
   mrp          Float
   saleRate     Float
   deal         Float
-  free         Int    @db.UnsignedInt
+  free         Int                @db.UnsignedInt
   purchaseRate Float
+  wishlist     wishlistProducts[]
+  cart         cartProducts[]
 }
 
 model users {
-  id                      Int         @id @default(autoincrement())
-  displayName             String?     @db.VarChar(255)
-  username                String?     @unique(map: "username") @db.VarChar(255)
-  contactNumber           String?     @unique(map: "contactNumber") @db.VarChar(255)
-  isContactNumberVerified Boolean?    @default(false)
-  email                   String?     @unique(map: "email") @db.VarChar(255)
-  isEmailVerified         Boolean?    @default(false)
-  dateOfBirth             DateTime?   @db.Date
-  photoKey                String?     @db.VarChar(255)
-  refreshToken            String?     @db.VarChar(255)
-  password                String?     @db.VarChar(255)
-  createdAt               DateTime    @db.DateTime(0)
-  updatedAt               DateTime    @db.DateTime(0)
+  id                      Int                @id @default(autoincrement()) @db.UnsignedInt
+  displayName             String?            @db.VarChar(255)
+  username                String?            @unique(map: "username") @db.VarChar(255)
+  contactNumber           String?            @unique(map: "contactNumber") @db.VarChar(255)
+  isContactNumberVerified Boolean?           @default(false)
+  email                   String?            @unique(map: "email") @db.VarChar(255)
+  isEmailVerified         Boolean?           @default(false)
+  dateOfBirth             DateTime?          @db.Date
+  photoKey                String?            @db.VarChar(255)
+  refreshToken            String?            @db.VarChar(255)
+  password                String?            @db.VarChar(255)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
   addresses               addresses[]
+  wishlist                wishlistProducts[]
+  cart                    cartProducts[]
+}
+
+model wishlistProducts {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  userId    Int      @db.UnsignedInt
+  productId Int      @db.UnsignedInt
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "wishlist_ibfk_1")
+  product   products @relation(fields: [productId], references: [id], onDelete: Cascade, map: "wishlist_ibfk_2")
+  createdAt DateTime @default(now())
+
+  @@index([userId], map: "userId")
+  @@index([productId], map: "productId")
+}
+
+model cartProducts {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  userId    Int      @db.UnsignedInt
+  productId Int      @db.UnsignedInt
+  quantity  Int      @db.UnsignedInt
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "cart_ibfk_1")
+  product   products @relation(fields: [productId], references: [id], onDelete: Cascade, map: "cart_ibfk_2")
+  createdAt DateTime @default(now())
+
+  @@index([userId], map: "userId")
+  @@index([productId], map: "productId")
 }

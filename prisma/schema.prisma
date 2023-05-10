@@ -31,15 +31,17 @@ model products {
   code         String             @unique(map: "unique_code") @db.VarChar(255)
   name         String             @db.VarChar(255)
   stock        Int                @db.UnsignedInt
-  remark       String             @db.VarChar(255)
-  company      String             @db.VarChar(255)
-  mrp          Float
-  saleRate     Float
-  deal         Float
-  free         Int                @db.UnsignedInt
-  purchaseRate Float
+  remark       String?            @db.VarChar(255)
+  company      String?            @db.VarChar(255)
+  mrp          Float?
+  saleRate     Float?
+  deal         Float?
+  free         Int?               @db.UnsignedInt
+  purchaseRate Float?
   wishlist     wishlistProducts[]
   cart         cartProducts[]
+  minCartLimit Int?               @default(1)
+  maxCartLimit Int?               @default(6)
 }
 
 model users {
