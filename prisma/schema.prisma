@@ -40,8 +40,8 @@ model products {
   purchaseRate Float?
   wishlist     wishlistProducts[]
   cart         cartProducts[]
-  minCartLimit Int?               @default(1)
-  maxCartLimit Int?               @default(6)
+  minCartLimit Int                @default(1)
+  maxCartLimit Int                @default(6)
 }
 
 model users {

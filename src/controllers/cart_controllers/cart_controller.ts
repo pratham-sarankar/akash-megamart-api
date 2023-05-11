@@ -36,7 +36,7 @@ export default class CartController {
     static async add(req: Request, res: Response) {
         //Check required parameters - product id, quantity
         const productId: number = Number(req.body.productId);
-        const quantity: number = Number(req.body.quantity ?? 1);
+        let quantity: number = req.body.quantity;
 
         //If product id is not provided, return error
         if (!productId) {
@@ -88,6 +88,11 @@ export default class CartController {
                 data: null,
                 message: 'Product already in cart, update quantity instead',
             });
+        }
+
+        //If the quantity provided is null, make it set it to the minCartLimit
+        if (!quantity) {
+            quantity = product.minCartLimit;
         }
 
         //If product is not in cart, add product to cart
