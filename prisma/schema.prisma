@@ -44,6 +44,15 @@ model products {
   maxCartLimit Int                @default(6)
 }
 
+model companies {
+  id        Int      @id @default(autoincrement())
+  sgcode    String
+  scode     String
+  name      String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model users {
   id                      Int                @id @default(autoincrement()) @db.UnsignedInt
   displayName             String?            @db.VarChar(255)

@@ -4,7 +4,10 @@ import axios from "axios";
 import MargERPEncryption from "../../config/marg";
 
 export default class ProductController {
+
     public static async sync(req: Request, res: Response) {
+        const lastSync = new Date();
+        lastSync.setDate(lastSync.getDate() - 5);
         try {
             const response = await axios.request({
                 method: 'post',
@@ -16,11 +19,12 @@ export default class ProductController {
                 data: {
                     "CompanyCode": process.env.MargERP_Company_Name,
                     "MargID": process.env.MargERP_MargID,
-                    "Datetime": "",
+                    "Datetime": lastSync.toISOString(),
                     "index": "0"
                 },
             });
             const result: any = MargERPEncryption.decodeAndDecompress(response.data);
+
             let products = ProductController.parseMargProductsData((result['Details']['pro_N'] ?? []) as any);
             products = products.filter((product: any) => product.company != "MARKET");
             await prisma.products.deleteMany({});
@@ -33,6 +37,7 @@ export default class ProductController {
                 data: {
                     summary: {
                         total: count,
+                        result: result,
                     }
                 },
                 message: 'Products synced successfully'
@@ -47,7 +52,7 @@ export default class ProductController {
         }
     }
 
-    private static parseMargProductsData(data: any) {
+    public static parseMargProductsData(data: any) {
         const parsedData = (data as []).map((product: any) => {
             return {
                 id: Number(product['rid']),
