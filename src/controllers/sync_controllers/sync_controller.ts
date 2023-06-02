@@ -6,6 +6,60 @@ import prisma from "../../config/database";
 import CompanyController from "../company_controllers/company_controller";
 
 export default class SyncController {
+    public static async syncAll(req: Request, res: Response) {
+        try {
+            const response = await axios.request({
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: process.env.MargERP_Product_Endpoint,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    "CompanyCode": process.env.MargERP_Company_Name,
+                    "MargID": process.env.MargERP_MargID,
+                    "Datetime": "",
+                    "index": "0"
+                },
+            });
+
+            const data: any = MargERPEncryption.decodeAndDecompress(response.data);
+
+            let products = ProductController.parseMargProductsData((data['Details']['pro_N'] ?? []) as any);
+            let result = {} as any;
+
+            //Run a for loop and upsert each product
+            for (let product of products) {
+                const response = await prisma.products.upsert({
+                    where: {
+                        id: product.id
+                    },
+                    update: product,
+                    create: product
+                });
+
+                result[product.id] = response;
+            }
+
+            return res.json({
+                status: 'success',
+                data: {
+                    summary: {
+                        total: products.length,
+                        users: data['Details']['Users'],
+                        party: data['Details']['Party'],
+                    }
+                }
+            });
+        } catch (e: any) {
+            return res.status(500).json({
+                status: 'error',
+                data: e,
+                message: e.message
+            });
+        }
+    }
+
     public static async sync(req: Request, res: Response) {
         const lastSyncDate = await SyncController.getLastSyncDate();
 
@@ -63,7 +117,6 @@ export default class SyncController {
     private static async setLastSyncDate(lastSyncDate: Date) {
         process.env.MargERP_Last_Sync_Date = lastSyncDate.toISOString();
     }
-
 
     private static async syncProducts(result: any) {
         //Sync new products

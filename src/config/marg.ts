@@ -13,6 +13,12 @@ export default class MargERPEncryption {
         return result;
     }
 
+    public static decompress(data: string): string {
+        const input = Buffer.from(data, 'base64');
+        const uncompressed = inflateRawSync(input);
+        return uncompressed.toString('utf8').trim();
+    }
+
     private static decrypt(data: string, key: string): string {
         const rijndaelCipher = createDecipheriv("aes-128-cbc", key, key);
 
@@ -21,12 +27,6 @@ export default class MargERPEncryption {
         let plainText = rijndaelCipher.update(encryptedData);
         plainText = Buffer.concat([plainText, rijndaelCipher.final()]);
 
-        return plainText.toString("utf-8");
-    }
-
-    private static decompress(data: string): string {
-        const input = Buffer.from(data, 'base64');
-        const uncompressed = inflateRawSync(input);
-        return uncompressed.toString('utf8');
+        return plainText.toString("utf-8").trim();
     }
 }

@@ -72,5 +72,4 @@ export default class ProductController {
         return parsedData;
     }
 
-
 }

@@ -14,6 +14,9 @@ export default class ProductSearchController {
                     gt: 0,
                 },
             },
+            include: {
+                images: true,
+            },
             orderBy: {
                 stock: 'desc',
             },
@@ -54,6 +57,9 @@ export default class ProductSearchController {
                 name: {
                     contains: q.toString(),
                 },
+            },
+            include: {
+                images: true,
             },
             skip,
             take,

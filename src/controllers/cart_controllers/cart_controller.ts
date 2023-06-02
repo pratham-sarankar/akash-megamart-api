@@ -90,9 +90,19 @@ export default class CartController {
             });
         }
 
+
         //If the quantity provided is null, make it set it to the minCartLimit
         if (!quantity) {
             quantity = product.minCartLimit;
+        }
+
+        //If the stock is less than the quantity provided, return error
+        if (product.stock < quantity) {
+            return res.status(200).json({
+                status: 'error',
+                data: null,
+                message: 'Either product is out of stock or the quantity provided is more than the stock available',
+            });
         }
 
         //If product is not in cart, add product to cart

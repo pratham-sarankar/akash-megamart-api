@@ -9,6 +9,8 @@ import product_routes from "./routes/product_routes";
 import wishlist_routes from "./routes/wishlist_routes";
 import cart_routes from "./routes/cart_routes";
 import sync_routes from "./routes/sync_routes";
+import order_routes from "./routes/order_routes";
+import image_routes from "./routes/image_routes";
 
 const app: Application = express();
 
@@ -23,6 +25,8 @@ app.use('/users', user_routes);
 app.use("/products", product_routes);
 app.use("/wishlist", wishlist_routes);
 app.use("/cart", cart_routes);
+app.use("/orders", order_routes);
+app.use("/images", image_routes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

@@ -8,19 +8,21 @@ datasource db {
 }
 
 model addresses {
-  id            Int      @id @default(autoincrement()) @db.UnsignedInt
-  name          String?  @db.VarChar(255)
-  contactNumber String?  @db.VarChar(255)
-  type          String   @db.VarChar(255)
-  line1         String   @db.VarChar(255)
-  line2         String?  @db.VarChar(255)
-  landmark      String?  @db.VarChar(255)
-  pinCode       String?  @db.VarChar(255)
-  isDefault     Boolean? @default(false)
-  userId        Int      @db.UnsignedInt
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  users         users    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "addresses_ibfk_1")
+  id            Int       @id @default(autoincrement()) @db.UnsignedInt
+  name          String?   @db.VarChar(255)
+  contactNumber String?   @db.VarChar(255)
+  type          String    @db.VarChar(255)
+  line1         String    @db.VarChar(255)
+  line2         String?   @db.VarChar(255)
+  landmark      String?   @db.VarChar(255)
+  pinCode       String?   @db.VarChar(255)
+  isDefault     Boolean?  @default(false)
+  userId        Int       @db.UnsignedInt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  users         users     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "addresses_ibfk_1")
+  orders        orders[]
+  deletedAt     DateTime?
 
   @@index([userId], map: "userId")
 }
@@ -42,6 +44,8 @@ model products {
   cart         cartProducts[]
   minCartLimit Int                @default(1)
   maxCartLimit Int                @default(6)
+  OrderItem    orderItems[]
+  images       images[]
 }
 
 model companies {
@@ -70,6 +74,7 @@ model users {
   addresses               addresses[]
   wishlist                wishlistProducts[]
   cart                    cartProducts[]
+  orders                  orders[]
 }
 
 model wishlistProducts {
@@ -95,4 +100,43 @@ model cartProducts {
 
   @@index([userId], map: "userId")
   @@index([productId], map: "productId")
+}
+
+model orders {
+  id              Int          @id @default(autoincrement()) @db.UnsignedInt
+  amount          Float        @db.Float
+  razorpayOrderId String?      @unique
+  userId          Int          @db.UnsignedInt
+  addressId       Int          @db.UnsignedInt
+  status          OrderStatus  @default(CREATED)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  orderItems      orderItems[]
+  address         addresses    @relation(fields: [addressId], references: [id])
+  user            users        @relation(fields: [userId], references: [id])
+}
+
+model orderItems {
+  id        Int      @id @default(autoincrement())
+  order     orders   @relation(fields: [orderId], references: [id])
+  orderId   Int      @db.UnsignedInt
+  product   products @relation(fields: [productId], references: [id])
+  productId Int      @db.UnsignedInt
+  quantity  Int
+  amount    Float    @db.Float
+}
+
+model images {
+  id        Int      @id @default(autoincrement())
+  productId Int      @db.UnsignedInt
+  imageKey  String   @db.VarChar(255)
+  product   products @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  CREATED
+  INITIATED
+  PROCESSING
+  COMPLETED
+  CANCELED
 }

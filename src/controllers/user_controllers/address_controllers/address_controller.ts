@@ -99,8 +99,10 @@ export default class UserAddressController {
     }
 
     public static async removeAddress(req: Request, res: Response) {
+        console.log("Remove address called");
         // Check required parameters - id
         const {id} = req.params;
+
         if (!id) {
             return res.status(400).json({
                 status: 'error',
@@ -155,11 +157,15 @@ export default class UserAddressController {
             });
         }
 
+
         // Remove address
-        await prisma.addresses.delete({
+        await prisma.addresses.update({
             where: {
                 id: Number(id),
             },
+            data: {
+                deletedAt: new Date(),
+            }
         });
 
         // Send response
@@ -212,7 +218,12 @@ export default class UserAddressController {
             }
 
             //Get all addresses
-            const addresses = user.addresses;
+            const addresses = await prisma.addresses.findMany({
+                where: {
+                    userId: uid,
+                    deletedAt: null,
+                }
+            });
 
             //Send response
             return res.status(200).json({
@@ -248,7 +259,7 @@ export default class UserAddressController {
             select: {
                 id: true,
                 displayName: true,
-                email: true
+                email: true,
             }
         });
 
@@ -426,7 +437,7 @@ export default class UserAddressController {
                 data: req.body,
             });
 
-            //Send response
+            //Send Response
             return res.status(200).json({
                 status: 'success',
                 data: {
